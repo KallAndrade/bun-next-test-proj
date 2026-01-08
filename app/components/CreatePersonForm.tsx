@@ -1,39 +1,31 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
+import { createPersonAction } from "../lib/actions";
 
 export default function CreatePersonForm() {
   const [form, setForm] = useState({ name: "", email: "", role: "" });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setSuccess("");
-    try {
-      const res = await fetch("/api/persons/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to create person.");
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const result = await createPersonAction(formData);
+      if (result?.error) {
+        setError(result.error);
       } else {
         setSuccess("Person created successfully!");
         setForm({ name: "", email: "", role: "" });
       }
-    } catch (err) {
-      setError("Network error.");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -75,8 +67,8 @@ export default function CreatePersonForm() {
           style={{ width: "100%", padding: "0.5rem", marginTop: 4, border: "1px solid #ccc", borderRadius: 4 }}
         />
       </div>
-      <button type="submit" disabled={loading} style={{ background: "#14b8a6", color: "#fff", padding: "0.5rem 1rem", borderRadius: 6, border: "none", fontWeight: 500 }}>
-        {loading ? "Creating..." : "Create Person"}
+      <button type="submit" style={{ background: "#14b8a6", color: "#fff", padding: "0.5rem 1rem", borderRadius: 6, border: "none", fontWeight: 500 }}>
+        {/* {loading ? "Creating..." : "Create Person"} */}
       </button>
       {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
       {success && <p style={{ color: "green", marginTop: "1rem" }}>{success}</p>}
