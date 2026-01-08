@@ -3,6 +3,8 @@ import { updatePerson } from "./db";
 import { createPerson } from "./db";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
 
 export async function updatePersonAction(formData: FormData) {
   
@@ -30,6 +32,10 @@ export async function updatePersonAction(formData: FormData) {
   }
 }
 
+export const handleCreatePersonAction = async (formData: FormData) => {
+  await createPersonAction(formData);
+};
+
 export async function createPersonAction(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -48,5 +54,24 @@ export async function createPersonAction(formData: FormData) {
     // return { success: true, person };
   } catch (error: any) {
     return { error: error.message || "Failed to create person." };
+  }
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
   }
 }

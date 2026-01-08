@@ -22,7 +22,8 @@ export async function createTables() {
       email TEXT NOT NULL UNIQUE,
       created_at TIMESTAMPTZ DEFAULT now(),
       updated_at TIMESTAMPTZ DEFAULT now(),
-      role VARCHAR(255) NOT NULL
+      role VARCHAR(255) NOT NULL,
+      password VARCHAR(255)
     );
     `;
 
@@ -47,6 +48,7 @@ export type Person = {
   created_at: string | Date;
   updated_at: string | Date;
   role: string;
+  password?: string;
 };
 
 export type Compliment = {
@@ -71,6 +73,11 @@ export async function createPerson(data: { name: string; email: string; role: st
 
 export async function getPersonById(id: string): Promise<Person | null> {
   const rows = await sql<Person[]>`SELECT * FROM persons WHERE id = ${id}`;
+  return rows[0] ?? null;
+}
+
+export async function getPersonByEmail(email: string): Promise<Person | null> {
+  const rows = await sql<Person[]>`SELECT * FROM persons WHERE email = ${email}`;
   return rows[0] ?? null;
 }
 
